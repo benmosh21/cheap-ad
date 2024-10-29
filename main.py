@@ -68,7 +68,7 @@ class Button:
         if self.func:
             return self.func(*args)
         
-    def event(self, event, antimatterAmount):
+    def event(self, event, *args):
         isReleased = True
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -77,10 +77,8 @@ class Button:
             pos = pygame.mouse.get_pos()
             if self.rect.collidepoint(pos):
                 isReleased= True
-                return self.call_back(antimatterAmount)
-                
-            
-
+                return self.call_back(*args)
+                            
 
 class Dimention:
     def __init__(self, name, baseCost, costMult, powerMult, amount):
@@ -159,7 +157,10 @@ class Antimatter:
 
     def event(self, event):
         for b in self.dButtons:
-            print(b.event(event, self.AntimatterAmount))
+            t = b.event(event, self.AntimatterAmount)
+            if t is not None:
+                print(t)
+                self.AntimatterAmount = t
 
     def update(self, screen):
         self.draw(screen)
@@ -169,12 +170,13 @@ class Antimatter:
 
 def numToExpones(num):
     if num > 0:
-        num1 = num
-        base = int(math.log(num, 10))
-        if base < 3:
-            return (f"{num:.2f}")
-        else:
-            return str((f"{(num/(pow(10, base))):.2f}"))+"e"+str(base)
+        if num < 1.18e+308:
+            num1 = num
+            base = int(math.log(num, 10))
+            if base < 3:
+                return (f"{num:.2f}")
+            else:
+                return str((f"{(num/(pow(10, base))):.2f}"))+"e"+str(base)
     else:
         return str(f"{num}")
 
