@@ -113,15 +113,24 @@ class Antimatter:
                               Dimention("AD_3", pow(10, 4), pow(10, 5), 1.16, 0), Dimention("AD_4", pow(10, 6), pow(10, 6), 1.16, 0),
                               Dimention("AD_5", pow(10, 9), pow(10, 8), 1.16, 0), Dimention("AD_6", pow(10, 13), pow(10, 10), 1.23, 0),
                               Dimention("AD_7", pow(10, 18), pow(10, 12), 1.16, 0), Dimention("AD_8", pow(10, 24), pow(10, 15), 1.16, 0)]
+        self.BAB = None
         self.dButtons = []
         self.dTxtAmount = []
         self.dTxtPreduce = []
         self.DimentionsUI()
 
+
     def addAntimatter(self):
         for dimention in self.allDimentions:
             self.AntimatterAmount += dimention.preduce*dimention.powerMult
         return self.AntimatterAmount
+    
+    def buyAll(self):
+        for d in self.allDimentions:
+            while d.cost <= self.AntimatterAmount:
+                self.AntimatterAmount = d.func(self.AntimatterAmount)
+
+        print("t")
     
     def addADPreduceToNextAD(self):
         count = len(self.allDimentions)-1
@@ -137,6 +146,7 @@ class Antimatter:
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (800, 150+60*count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (500, 150+60*count), 30))
             count += 1
+        self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0))
 
     def draw(self, screen):
         count1 = 0
@@ -154,6 +164,8 @@ class Antimatter:
             tP.text = f"{numToExpones(self.allDimentions[count3].preduce)}"
             tP.draw(screen)
             count3+=1
+        if self.BAB:
+            self.BAB.draw(screen)
 
     def event(self, event):
         for b in self.dButtons:
@@ -161,6 +173,7 @@ class Antimatter:
             if t is not None:
                 print(t)
                 self.AntimatterAmount = t
+        self.BAB.event(event)
 
     def update(self, screen):
         self.draw(screen)
