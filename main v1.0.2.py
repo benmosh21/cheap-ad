@@ -22,7 +22,11 @@ class Text:
         self.color = color
         self.pos = pos
 
-
+    def draw_centeredx(self, posy, screen):
+        self.text_surface = self.font.render(self.text, True, self.color)
+        self.text_rect = self.text_surface.get_rect(center=(screen.get_width() // 2, posy))
+        screen.blit(self.text_surface, self.text_rect)
+    
     def draw(self, screen):
         self.text_surface = self.font.render(self.text, False, self.color)
         screen.blit(self.text_surface, self.pos)
@@ -53,6 +57,16 @@ class Button:
         self.mouseover()
         self.txt_surf = self.font.render(self.txt, 1, self.font_clr)
         self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
+
+        self.surf.fill(self.curclr)
+        self.surf.blit(self.txt_surf, self.txt_rect)
+        screen.blit(self.surf, self.rect)
+    
+    def draw_centeredx(self,posy, screen):
+        self.mouseover()
+        self.txt_surf = self.font.render(self.txt, 1, self.font_clr)
+        self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
+        self.rect   = self.surf.get_rect(center=(screen.get_width() // 2, posy))
 
         self.surf.fill(self.curclr)
         self.surf.blit(self.txt_surf, self.txt_rect)
@@ -91,7 +105,7 @@ class Dimention:
         self.cost = baseCost
         self.preduce = 0
 
-    def func(self, antimatterAmount=0):
+    def func(self, antimatterAmount=0): #buying a dimension
         if self.cost <= antimatterAmount:
             print(self.name)
             self.amount += 1
@@ -100,6 +114,17 @@ class Dimention:
                 self.cost *= self.costMult
                 self.powerMult *= 2
             self.preduce += 1
+            return antimatterAmount
+    
+    def funcx10(self, antimatterAmount=0): # buying up to 10 dimension
+        toTen = (10 - int(str(self.amount)[-1]))
+        if toTen * self.cost <= antimatterAmount: #finds amount to 10 and checks if you have enough to buy
+            print(self.name)
+            self.amount += toTen
+            antimatterAmount -= toTen*self.cost
+            self.cost *= self.costMult
+            self.powerMult *= 2
+            self.preduce += toTen
             return antimatterAmount
 
         
@@ -122,6 +147,8 @@ class Antimatter:
         self.dButtons = []
         self.dTxtAmount = []
         self.dTxtPreduce = []
+        self.dButtonsx10 = []
+
         self.DimentionsUI()
     
     def ADsProduction(self):
@@ -143,8 +170,9 @@ class Antimatter:
         count = 0
         for dimention in self.allDimentions:
             self.dButtons.append(Button((200, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0)))
-            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (800, 150+60*count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (500, 150+60*count), 30))
+            self.dButtonsx10.append(Button((1000, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0)))
+            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (750, 150+60*count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (450, 150+60*count), 30))
             count += 1
         self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0))
 
@@ -154,6 +182,11 @@ class Antimatter:
             b.txt = f"button {count1+1}, cost: {numToExpones(self.allDimentions[count1].cost)}"
             b.draw(screen)
             count1+=1
+        countx10 = 0
+        for b in self.dButtonsx10:
+            b.txt = f"buy 10 of tier {countx10+1}, cost: {numToExpones((10 - int(str(self.allDimentions[countx10].amount)[-1]))*self.allDimentions[countx10].cost)}"
+            b.draw(screen)
+            countx10+=1
         count2 = 0
         for tA in self.dTxtAmount:
             tA.text = f"({self.allDimentions[count2].amount%10})"
@@ -165,11 +198,16 @@ class Antimatter:
             tP.draw(screen)
             count3+=1
         if self.BAB:
-            self.BAB.draw(screen)
+            self.BAB.draw_centeredx(100,screen)
 
     def event(self, event):
         for b in self.dButtons:
             t = b.event(event, self.AntimatterAmount)
+            if t is not None:
+                print(t)
+                self.AntimatterAmount = t
+        for bx10 in self.dButtonsx10:
+            t = bx10.event(event, self.AntimatterAmount)
             if t is not None:
                 print(t)
                 self.AntimatterAmount = t
@@ -205,7 +243,7 @@ def main(isRunning):
 
         screen.fill("white")
 
-        scoreText.draw(screen)
+        scoreText.draw_centeredx(40,screen)
         #button.draw(screen)
 
         score += ADs.update(screen)
