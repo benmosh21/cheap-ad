@@ -105,7 +105,6 @@ class Dimention:
         
 
 class Antimatter:
-
     def __init__(self,fps):
         self.clock = pygame.time.Clock()
         self.tickspeed = 1
@@ -115,6 +114,7 @@ class Antimatter:
         self.dt = self.clock.tick(self.fps)/1000
         self.AntimatterAmount = 10
         self.Dimentions = 0
+        self.BAB = None
         self.allDimentions = [Dimention("AD_1", pow(10, 1), pow(10, 3), 1, 0), Dimention("AD_2", pow(10, 2), pow(10, 4), 1, 0), 
                               Dimention("AD_3", pow(10, 4), pow(10, 5), 1, 0), Dimention("AD_4", pow(10, 6), pow(10, 6), 1, 0),
                               Dimention("AD_5", pow(10, 9), pow(10, 8), 1, 0), Dimention("AD_6", pow(10, 13), pow(10, 10), 1, 0),
@@ -134,6 +134,11 @@ class Antimatter:
         self.AntimatterAmount += self.allDimentions[0].preduce*self.allDimentions[0].powerMult*self.tickspeed*self.dt
         return self.AntimatterAmount
     
+    def buyAll(self):
+        for d in self.allDimentions[::-1]:
+            while d.cost <= self.AntimatterAmount:
+                self.AntimatterAmount = d.func(self.AntimatterAmount)
+
     def DimentionsUI(self):
         count = 0
         for dimention in self.allDimentions:
@@ -141,6 +146,7 @@ class Antimatter:
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (800, 150+60*count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (500, 150+60*count), 30))
             count += 1
+        self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0))
 
     def draw(self, screen):
         count1 = 0
@@ -158,6 +164,8 @@ class Antimatter:
             tP.text = f"{numToExpones(self.allDimentions[count3].preduce)}"
             tP.draw(screen)
             count3+=1
+        if self.BAB:
+            self.BAB.draw(screen)
 
     def event(self, event):
         for b in self.dButtons:
@@ -165,6 +173,7 @@ class Antimatter:
             if t is not None:
                 print(t)
                 self.AntimatterAmount = t
+        self.BAB.event(event)
 
     def update(self, screen):
         self.draw(screen)
@@ -174,9 +183,8 @@ class Antimatter:
 
 def numToExpones(num):
     if num > 0:
-        if num < 1.18e+308:
-            num1 = num
-            base = int(math.log(num, 10))
+        if num < 1.18e308:
+            base = len(str(num).split(".")[0])-1 #splits the number into the int part and the decimal part and then  removes one from the length of the int part
             if base < 3:
                 return (f"{num:.2f}")
             else:
