@@ -4,6 +4,8 @@ import time
 import base64
 import pygame
 import math
+from typing import Union
+import pygame.gfxdraw
 
 pygame.init()
 pygame.display.init()
@@ -33,12 +35,17 @@ class Text:
 
 
 class Button:
-    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr):
+    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr, corner_radius, outline_width):
+        self.x, self.y = position
+        self.width, self.height = size
         self.clr    = clr
         self.size   = size
         self.func   = func
-        self.surf   = pygame.Surface(size)
+        self.outlineSize = outline_width
+        self.surf = pygame.Surface(size)
         self.rect   = self.surf.get_rect(center=position)
+        self.outlineColor = outline_clr
+        self.cornerRad = corner_radius
 
         if cngclr:
             self.cngclr = cngclr
@@ -52,30 +59,49 @@ class Button:
         self.font = pygame.font.SysFont(font, font_size)
         self.txt = text
         self.font_clr = font_clr
+        self.outline_rect = pygame.Rect(self.x - self.outlineSize, self.y - self.outlineSize, self.width + 2 * self.outlineSize, self.height + 2 * self.outlineSize)
+        self.collisionbox = self.outline_rect
 
-    def draw(self, screen):
+    def draw(self,surface):
         self.mouseover()
-        self.txt_surf = self.font.render(self.txt, 1, self.font_clr)
-        self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
 
-        self.surf.fill(self.curclr)
-        self.surf.blit(self.txt_surf, self.txt_rect)
-        screen.blit(self.surf, self.rect)
+        # Draw the outline first (larger rectangle)
+        outline_rect = pygame.Rect(self.x - self.outlineSize, self.y - self.outlineSize, self.width + 2 * self.outlineSize, self.height + 2 * self.outlineSize)
+        pygame.draw.rect(surface, self.outlineColor, outline_rect, border_radius=self.cornerRad + self.outlineSize)
+
+        # Draw the inner filled rectangle (smaller rectangle)
+        button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        pygame.draw.rect(surface, self.curclr, button_rect, border_radius=self.cornerRad)
     
-    def draw_centeredx(self,posy, screen):
-        self.mouseover()
-        self.txt_surf = self.font.render(self.txt, 1, self.font_clr)
-        self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
-        self.rect   = self.surf.get_rect(center=(screen.get_width() // 2, posy))
+        text_surface = self.font.render(self.txt, True, self.font_clr)  # Render text 
+        text_rect = text_surface.get_rect(center=button_rect.center)  # Center the text on the button
+        surface.blit(text_surface, text_rect)
 
-        self.surf.fill(self.curclr)
-        self.surf.blit(self.txt_surf, self.txt_rect)
-        screen.blit(self.surf, self.rect)
+        self.collisionbox = outline_rect
+
+    def draw_centeredx(self,surface):
+        self.mouseover()
+
+        self.rectOuter   = self.surf.get_rect(center=((screen.get_width() // 2, self.y)))
+        # Draw the outline first (larger rectangle)
+        x,y,width,height = self.rectOuter
+        outline_rect = pygame.Rect(x - self.outlineSize, y - self.outlineSize, width + 2 * self.outlineSize, height + 2 * self.outlineSize)
+        pygame.draw.rect(surface, self.outlineColor, outline_rect, border_radius=self.cornerRad + self.outlineSize)
+
+        # Draw the inner filled rectangle (smaller rectangle)
+        button_rect = pygame.Rect(x, y, width, height)
+        pygame.draw.rect(surface, self.curclr, button_rect, border_radius=self.cornerRad)
+
+        text_surface = self.font.render(self.txt, True, self.font_clr)  # Render text in white
+        text_rect = text_surface.get_rect(center=button_rect.center)  # Center the text on the button
+        surface.blit(text_surface, text_rect)
+
+        self.collisionbox = outline_rect
 
     def mouseover(self):
         self.curclr = self.clr
         pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(pos):
+        if self.collisionbox.collidepoint(pos):
             self.curclr = self.cngclr
 
     def call_back(self, *args):
@@ -89,7 +115,7 @@ class Button:
                 isReleased = False
         elif not(isReleased) or event.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
-            if self.rect.collidepoint(pos):
+            if self.collisionbox.collidepoint(pos):
                 isReleased= True
                 return self.call_back(*args)
                             
@@ -169,12 +195,12 @@ class Antimatter:
     def DimentionsUI(self):
         count = 0
         for dimention in self.allDimentions:
-            self.dButtons.append(Button((200, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0)))
-            self.dButtonsx10.append(Button((1000, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0)))
+            self.dButtons.append(Button((25, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0), "black", 10, 1))
+            self.dButtonsx10.append(Button((825, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), "black", 10, 1))
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (750, 150+60*count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (450, 150+60*count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0))
+        self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), "black", 10, 1)
 
     def draw(self, screen):
         count1 = 0
@@ -198,8 +224,7 @@ class Antimatter:
             tP.draw(screen)
             count3+=1
         if self.BAB:
-            self.BAB.draw_centeredx(100,screen)
-
+            self.BAB.draw_centeredx(screen)
     def event(self, event):
         for b in self.dButtons:
             t = b.event(event, self.AntimatterAmount)
