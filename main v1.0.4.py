@@ -6,15 +6,21 @@ import pygame
 import math
 from typing import Union
 import pygame.gfxdraw
+from decimal import Decimal,getcontext
+
 
 pygame.init()
 pygame.display.init()
 
-screen = pygame.display.set_mode([1200, 700])
+WIDTH, HEIGHT = 1200, 700
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+
 
 pygame.display.set_caption("AD cheap yes graphics knockoff")
 
 Roboto_Black = "Roboto/Roboto-Black.ttf"
+
+getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
 class Text:
     def __init__(self, text, font, color, pos, font_size):
@@ -35,7 +41,7 @@ class Text:
 
 
 class Button:
-    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr, corner_radius, outline_width):
+    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr,outline_cngclr, corner_radius, outline_width):
         self.x, self.y = position
         self.width, self.height = size
         self.clr    = clr
@@ -51,7 +57,11 @@ class Button:
             self.cngclr = cngclr
         else:
             self.cngclr = clr
-
+        
+        if outline_cngclr:
+            self.outcngclr = outline_cngclr
+        else:
+            self.outcngclr = outline_clr
         if len(clr) == 4:
             self.surf.set_alpha(clr[3])
 
@@ -67,7 +77,7 @@ class Button:
 
         # Draw the outline first (larger rectangle)
         outline_rect = pygame.Rect(self.x - self.outlineSize, self.y - self.outlineSize, self.width + 2 * self.outlineSize, self.height + 2 * self.outlineSize)
-        pygame.draw.rect(surface, self.outlineColor, outline_rect, border_radius=self.cornerRad + self.outlineSize)
+        pygame.draw.rect(surface, self.outline_curclr, outline_rect, border_radius=self.cornerRad + self.outlineSize)
 
         # Draw the inner filled rectangle (smaller rectangle)
         button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
@@ -86,7 +96,7 @@ class Button:
         # Draw the outline first (larger rectangle)
         x,y,width,height = self.rectOuter
         outline_rect = pygame.Rect(x - self.outlineSize, y - self.outlineSize, width + 2 * self.outlineSize, height + 2 * self.outlineSize)
-        pygame.draw.rect(surface, self.outlineColor, outline_rect, border_radius=self.cornerRad + self.outlineSize)
+        pygame.draw.rect(surface, self.outline_curclr, outline_rect, border_radius=self.cornerRad + self.outlineSize)
 
         # Draw the inner filled rectangle (smaller rectangle)
         button_rect = pygame.Rect(x, y, width, height)
@@ -100,9 +110,11 @@ class Button:
 
     def mouseover(self):
         self.curclr = self.clr
+        self.outline_curclr = self.outlineColor
         pos = pygame.mouse.get_pos()
         if self.collisionbox.collidepoint(pos):
             self.curclr = self.cngclr
+            self.outline_curclr = self.outcngclr
 
     def call_back(self, *args):
         if self.func:
@@ -175,7 +187,7 @@ class Antimatter:
         self.dTxtPreduce = []
         self.dButtonsx10 = []
 
-        self.DimentionsUI()
+        self.DimentionsUI(screen)
     
     def ADsProduction(self):
         self.dt = self.clock.tick(self.fps)/1000
@@ -191,17 +203,26 @@ class Antimatter:
         for d in self.allDimentions[::-1]:
             while d.cost <= self.AntimatterAmount:
                 self.AntimatterAmount = d.func(self.AntimatterAmount)
+        while self.tickspeedCost <= self.AntimatterAmount:
+            self.tickspeedup()
 
-    def DimentionsUI(self):
+    def tickspeedup(self):
+        if self.tickspeedCost <= self.AntimatterAmount:
+            self.tickspeed *= self.tickspeedMult
+            self.tickspeedCost *= 10
+
+    def DimentionsUI(self,screen):
+        WIDTH = screen.get_width()
+        HEIGHT = screen.get_height()
         count = 0
         for dimention in self.allDimentions:
-            self.dButtons.append(Button((25, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0), "black", 10, 1))
-            self.dButtonsx10.append(Button((825, 150+60*count), (350,50), (200,200,200), (255, 0, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), "black", 10, 1))
-            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (750, 150+60*count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (450, 150+60*count), 30))
+            self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+            self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 230+60*count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (425, 230+60*count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200,200,200), (255, 0, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), "black", 10, 1)
-
+        self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.tickspeedbutton = Button((500, 160), (425, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
     def draw(self, screen):
         count1 = 0
         for b in self.dButtons:
@@ -225,6 +246,10 @@ class Antimatter:
             count3+=1
         if self.BAB:
             self.BAB.draw_centeredx(screen)
+        if self.tickspeedbutton:
+            self.tickspeedbutton.txt = f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}"
+            self.tickspeedbutton.draw_centeredx(screen)
+
     def event(self, event):
         for b in self.dButtons:
             t = b.event(event, self.AntimatterAmount)
@@ -237,12 +262,28 @@ class Antimatter:
                 print(t)
                 self.AntimatterAmount = t
         self.BAB.event(event)
+        self.tickspeedbutton.event(event)
 
     def update(self, screen):
         self.draw(screen)
         return(self.ADsProduction())
 
-
+    def resize(self,screen):
+        WIDTH = screen.get_width()
+        HEIGHT = screen.get_height()
+        count = 0
+        self.dButtons = []
+        self.dButtonsx10 = []
+        self.dTxtAmount = []
+        self.dTxtPreduce = []
+        for dimention in self.allDimentions:
+            self.dButtons.append(Button((25, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0), self.allDimentions[count].func,f"button {count + 1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30, (0, 0, 0),(0, 0, 0), (250, 0, 0), 10, 1))
+            self.dButtonsx10.append(Button((WIDTH - 375, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0),self.allDimentions[count].funcx10,f"buy 10 of tier {count + 1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1])) * dimention.cost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1))
+            self.dTxtAmount.append(Text(f"({dimention.amount % 10})", Roboto_Black, "Black", (WIDTH - 425, 230 + 60 * count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
+            count += 1
+        self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
+        self.tickspeedbutton = Button((500, 160), (425, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
 
 def numToExpones(num):
     if num > 0:
@@ -251,7 +292,7 @@ def numToExpones(num):
             if base < 3:
                 return (f"{num:.2f}")
             else:
-                return str((f"{(num/(pow(10, base))):.2f}"))+"e"+str(base)
+                return str((f"{(num/(pow(10, base))):.2f}"))+"E+"+str(base)
     else:
         return str(f"{num}")
 
@@ -261,6 +302,8 @@ def test():
 def main(isRunning):
     score = 0
     fps = 20
+    WIDTH, HEIGHT = 1200, 700
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
     scoreText = Text("", Roboto_Black, "black", (400, 40), 30)
     ADs = Antimatter(fps)
@@ -276,11 +319,17 @@ def main(isRunning):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 isRunning = False
-
+            elif event.type == pygame.VIDEORESIZE:
+                # Handle window resize
+                WIDTH, HEIGHT = event.w, event.h
+                screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+                ADs.resize(screen)
             ADs.event(event)
 
+        #ADs.tickspeed = ADs.AntimatterAmount+1 # cheat code :-)
+
         pygame.display.flip()
-        scoreText.text = "Antimatter Amount " + str(numToExpones(ADs.AntimatterAmount))
+        scoreText.text = "Antimatter Amount " + numToExpones(ADs.AntimatterAmount)
             
     pygame.quit()
 
