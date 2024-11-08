@@ -187,7 +187,10 @@ class Antimatter:
         self.dt = self.clock.tick(self.fps)/1000
         self.AntimatterAmount = 10
         self.Dimentions = 0
+        self.wipeSaveClicks = 5
         self.BAB = None
+        self.tickspeedbutton = None
+        self.wipesavebutton = None
         self.allDimentions = [Dimention("AD_1", pow(10, 1), pow(10, 3), 1, 0), Dimention("AD_2", pow(10, 2), pow(10, 4), 1, 0), 
                               Dimention("AD_3", pow(10, 4), pow(10, 5), 1, 0), Dimention("AD_4", pow(10, 6), pow(10, 6), 1, 0),
                               Dimention("AD_5", pow(10, 9), pow(10, 8), 1, 0), Dimention("AD_6", pow(10, 13), pow(10, 10), 1, 0),
@@ -198,7 +201,7 @@ class Antimatter:
         self.dButtonsx10 = []
 
         self.DimentionsUI(screen)
-    
+
     def ADsProduction(self):
         self.dt = self.clock.tick(self.fps)/1000
         count = len(self.allDimentions)-1
@@ -233,6 +236,9 @@ class Antimatter:
             count += 1
         self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.tickspeedbutton = Button((500, 160), (425, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+    
+
     def draw(self, screen):
         count1 = 0
         for b in self.dButtons:
@@ -259,6 +265,9 @@ class Antimatter:
         if self.tickspeedbutton:
             self.tickspeedbutton.txt = f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}"
             self.tickspeedbutton.draw_centeredx(screen)
+        if self.wipesavebutton:
+            self.wipesavebutton.txt = f"Wipe save ({self.wipeSaveClicks})"
+            self.wipesavebutton.draw(screen)
 
     def event(self, event):
         for b in self.dButtons:
@@ -273,6 +282,7 @@ class Antimatter:
                 self.AntimatterAmount = t
         self.BAB.event(event)
         self.tickspeedbutton.event(event)
+        self.wipesavebutton.event(event)
 
     def update(self, screen):
         self.draw(screen)
@@ -294,6 +304,7 @@ class Antimatter:
             count += 1
         self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
         self.tickspeedbutton = Button((500, 160), (425, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
+        self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
 
     def getGameState(self):
         self.GAMESTATE = [self.AntimatterAmount,self.fps,self.tickspeed,self.tickspeedCost,self.tickspeedMult]
@@ -341,6 +352,15 @@ class Antimatter:
                     dimension.preduce = self.get_attribute(dimlines,5,dimension.preduce)
         except FileNotFoundError:
             pass
+
+    def wipeSave(self):
+        if self.wipeSaveClicks <= 0:
+            with open(Savefile,"w") as file:
+                file.write("")
+            self.loadSave(Savefile)
+            self.wipeSaveClicks = 5
+        else:
+            self.wipeSaveClicks -= 1
 
 def numToExpones(num):
     if num > 0:
