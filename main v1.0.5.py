@@ -5,6 +5,7 @@ import time
 import base64
 import pygame
 import math
+import json
 from typing import Union
 import pygame.gfxdraw
 from decimal import Decimal,getcontext
@@ -22,15 +23,11 @@ Roboto_Black = "Roboto/Roboto-Black.ttf"
 
 getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
-Savesfolder = './Saves'
 
-try:
-    os.mkdir(Savesfolder)
-    print(f"Directory '{Savesfolder}' created!")
-except FileExistsError:
-    print(f"Directory '{Savesfolder}' already exists.")
-    
-Savefile = Savesfolder[2::] + "/save.txt"
+
+Savesfolder = os.path.join(os.getenv("LOCALAPPDATA"), "AntimatterGame")
+os.makedirs(Savesfolder, exist_ok=True)  # Ensure the directory exists or create it
+Savefile = os.path.join(Savesfolder, "save_game.json")
 
 class Text:
     def __init__(self, text, font, color, pos, font_size):
@@ -307,60 +304,95 @@ class Antimatter:
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
 
     def getGameState(self):
-        self.GAMESTATE = [self.AntimatterAmount,self.fps,self.tickspeed,self.tickspeedCost,self.tickspeedMult]
-        for dimension in self.allDimentions:
-            self.GAMESTATE.append(dimension.amount)
-            self.GAMESTATE.append(dimension.baseCost)
-            self.GAMESTATE.append(dimension.cost)
-            self.GAMESTATE.append(dimension.costMult)
-            self.GAMESTATE.append(dimension.powerMult)
-            self.GAMESTATE.append(dimension.preduce)
+        # Store all game state data in a dictionary for easy JSON serialization
+        self.GAMESTATE = {
+            "AntimatterAmount": self.AntimatterAmount,
+            "fps": self.fps,
+            "tickspeed": self.tickspeed,
+            "tickspeedCost": self.tickspeedCost,
+            "tickspeedMult": self.tickspeedMult,
+            "Dimensions": [
+                {
+                    "name": dimension.name,
+                    "amount": dimension.amount,
+                    "baseCost": dimension.baseCost,
+                    "cost": dimension.cost,
+                    "costMult": dimension.costMult,
+                    "powerMult": dimension.powerMult,
+                    "preduce": dimension.preduce
+                }
+                for dimension in self.allDimentions
+            ]
+        }
 
-    def saveGame(self,path):
+    def saveGame(self, path):
+        # Call getGameState to populate the GAMESTATE dictionary
         self.getGameState()
-        with open(path,"w") as file:
-            lines = []
-            for attribute in self.GAMESTATE:
-                lines.append((str(attribute)+":\n"))
-            file.writelines(lines)
-    
-    def get_attribute(self,lines,index,originalVal):
+        
         try:
-            return(float(lines[index].split(":")[0]))
-        except IndexError:
-            return(originalVal)
-        except ValueError:
-            return(originalVal)
+            # Write the GAMESTATE dictionary to a JSON file
+            with open(Savefile, "w") as file:
+                json.dump(self.GAMESTATE, file, indent=4)
+            print("Game saved successfully in AppData.")
+        except Exception as e:
+            print(f"An error occurred while saving: {e}")
 
-    def loadSave(self,path):
+    def loadSave(self, path):
         try:
-            with open(path,"r") as file:
-                lines = file.readlines()
-                self.AntimatterAmount = self.get_attribute(lines,0,self.AntimatterAmount)
-                self.fps = self.get_attribute(lines,1,self.fps)
-                self.tickspeed = self.get_attribute(lines,2,self.tickspeed)
-                self.tickspeedCost = self.get_attribute(lines,3,self.tickspeedCost)
-                self.tickspeedMult = self.get_attribute(lines,4,self.tickspeedMult)
-                for dimensionNumber in range(8):
-                    dimlines = lines[5+dimensionNumber*6::]
-                    dimension = self.allDimentions[dimensionNumber]
-                    dimension.amount = self.get_attribute(dimlines,0,dimension.amount)
-                    dimension.baseCost = self.get_attribute(dimlines,1,dimension.baseCost)
-                    dimension.cost = self.get_attribute(dimlines,2,dimension.cost)
-                    dimension.costMult = self.get_attribute(dimlines,3,dimension.costMult)
-                    dimension.powerMult = self.get_attribute(dimlines,4,dimension.powerMult)
-                    dimension.preduce = self.get_attribute(dimlines,5,dimension.preduce)
+            # Load data from the JSON file
+            with open(path, "r") as file:
+                data = json.load(file)
+
+            # Restore basic game attributes
+            self.AntimatterAmount = data.get("AntimatterAmount", self.AntimatterAmount)
+            self.fps = data.get("fps", self.fps)
+            self.tickspeed = data.get("tickspeed", self.tickspeed)
+            self.tickspeedCost = data.get("tickspeedCost", self.tickspeedCost)
+            self.tickspeedMult = data.get("tickspeedMult", self.tickspeedMult)
+
+            # Restore dimension attributes from JSON data
+            dimensions_data = data.get("Dimensions", [])
+            for i, dimension_data in enumerate(dimensions_data):
+                if i < len(self.allDimentions):  # Ensure index is within bounds
+                    dimension = self.allDimentions[i]
+                    dimension.amount = dimension_data.get("amount", dimension.amount)
+                    dimension.baseCost = dimension_data.get("baseCost", dimension.baseCost)
+                    dimension.cost = dimension_data.get("cost", dimension.cost)
+                    dimension.costMult = dimension_data.get("costMult", dimension.costMult)
+                    dimension.powerMult = dimension_data.get("powerMult", dimension.powerMult)
+                    dimension.preduce = dimension_data.get("preduce", dimension.preduce)
+            print("Game loaded successfully.")
+            
         except FileNotFoundError:
-            pass
+            print("Save file not found, starting with default values.")
+        except json.JSONDecodeError:
+            print("Error reading save file, it may be corrupted.")
 
     def wipeSave(self):
-        if self.wipeSaveClicks <= 0:
-            with open(Savefile,"w") as file:
-                file.write("")
-            self.loadSave(Savefile)
-            self.wipeSaveClicks = 5
-        else:
+    # Confirm wipe save if there are remaining confirmation clicks
+        if self.wipeSaveClicks > 0:
             self.wipeSaveClicks -= 1
+            return
+    
+    # Reset Antimatter and game state variables
+        self.AntimatterAmount = 10
+        self.tickspeed = 1
+        self.tickspeedCost = pow(10, 3)
+        self.tickspeedMult = 1.125
+        self.wipeSaveClicks = 5  # Reset wipe-save confirmation clicks
+    
+    # Reset all Dimention instances
+        for dimension in self.allDimentions:
+            dimension.amount = 0
+            dimension.cost = dimension.baseCost
+            dimension.preduce = 0
+            dimension.powerMult = 1  # If this is the intended reset value
+    
+    # Clear save file content
+        with open(Savefile, "w") as file:
+            file.write("")
+        print("Save wiped and game reset to initial state.")
+
 
 def numToExpones(num):
     if num > 0:
