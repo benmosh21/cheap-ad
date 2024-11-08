@@ -1,4 +1,5 @@
 import signal
+import os
 import msvcrt
 import time
 import base64
@@ -21,7 +22,15 @@ Roboto_Black = "Roboto/Roboto-Black.ttf"
 
 getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
-Savefile = "Saves/save.txt"
+Savesfolder = "C:\Program Files\Cheap antimatter dimensions saves"
+
+try:
+    os.mkdir(Savesfolder)
+    print(f"Directory '{Savesfolder}' created!")
+except FileExistsError:
+    print(f"Directory '{Savesfolder}' already exists.")
+    
+Savefile = Savesfolder[2::] + "/save.txt"
 
 class Text:
     def __init__(self, text, font, color, pos, font_size):
@@ -313,23 +322,25 @@ class Antimatter:
             return(originalVal)
 
     def loadSave(self,path):
-        with open(path,"r") as file:
-            lines = file.readlines()
-            self.AntimatterAmount = self.get_attribute(lines,0,self.AntimatterAmount)
-            self.fps = self.get_attribute(lines,1,self.fps)
-            self.tickspeed = self.get_attribute(lines,2,self.tickspeed)
-            self.tickspeedCost = self.get_attribute(lines,3,self.tickspeedCost)
-            self.tickspeedMult = self.get_attribute(lines,4,self.tickspeedMult)
-            for dimensionNumber in range(8):
-                dimlines = lines[5+dimensionNumber*6::]
-                dimension = self.allDimentions[dimensionNumber]
-                dimension.amount = self.get_attribute(dimlines,0,dimension.amount)
-                dimension.baseCost = self.get_attribute(dimlines,1,dimension.baseCost)
-                dimension.cost = self.get_attribute(dimlines,2,dimension.cost)
-                dimension.costMult = self.get_attribute(dimlines,3,dimension.costMult)
-                dimension.powerMult = self.get_attribute(dimlines,4,dimension.powerMult)
-                dimension.preduce = self.get_attribute(dimlines,5,dimension.preduce)
-
+        try:
+            with open(path,"r") as file:
+                lines = file.readlines()
+                self.AntimatterAmount = self.get_attribute(lines,0,self.AntimatterAmount)
+                self.fps = self.get_attribute(lines,1,self.fps)
+                self.tickspeed = self.get_attribute(lines,2,self.tickspeed)
+                self.tickspeedCost = self.get_attribute(lines,3,self.tickspeedCost)
+                self.tickspeedMult = self.get_attribute(lines,4,self.tickspeedMult)
+                for dimensionNumber in range(8):
+                    dimlines = lines[5+dimensionNumber*6::]
+                    dimension = self.allDimentions[dimensionNumber]
+                    dimension.amount = self.get_attribute(dimlines,0,dimension.amount)
+                    dimension.baseCost = self.get_attribute(dimlines,1,dimension.baseCost)
+                    dimension.cost = self.get_attribute(dimlines,2,dimension.cost)
+                    dimension.costMult = self.get_attribute(dimlines,3,dimension.costMult)
+                    dimension.powerMult = self.get_attribute(dimlines,4,dimension.powerMult)
+                    dimension.preduce = self.get_attribute(dimlines,5,dimension.preduce)
+        except FileNotFoundError:
+            pass
 
 def numToExpones(num):
     if num > 0:
