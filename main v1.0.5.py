@@ -22,7 +22,7 @@ Roboto_Black = "Roboto/Roboto-Black.ttf"
 
 getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
-Savesfolder = "C:\Program Files\Cheap antimatter dimensions saves"
+Savesfolder = './Saves'
 
 try:
     os.mkdir(Savesfolder)
