@@ -48,7 +48,7 @@ class Text:
 
 
 class Button:
-    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr,outline_cngclr, corner_radius, outline_width, name = None):
+    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr,outline_cngclr, corner_radius, outline_width, name = None, locked = False, lockedText = "Locked"):
         self.x, self.y = position
         self.width, self.height = size
         self.clr    = clr
@@ -60,6 +60,9 @@ class Button:
         self.outlineColor = outline_clr
         self.cornerRad = corner_radius
         self.name = name
+        self.locked = locked
+        self.lockedtxt =  lockedText
+        self.locked_color = (66, 57, 66)
 
         if cngclr:
             self.cngclr = cngclr
@@ -72,6 +75,10 @@ class Button:
             self.outcngclr = outline_clr
         if len(clr) == 4:
             self.surf.set_alpha(clr[3])
+        
+        if self.locked:
+            self.curclr = self.locked_color
+            self.txt = self.lockedtxt
 
 
         self.font = pygame.font.SysFont(font, font_size)
@@ -123,26 +130,30 @@ class Button:
         if self.collisionbox.collidepoint(pos):
             self.curclr = self.cngclr
             self.outline_curclr = self.outcngclr
+        if self.locked:
+            self.curclr = self.locked_color
+            self.txt = self.lockedtxt
 
     def call_back(self, *args):
         if self.func:
             return self.func(*args)
         
     def event(self, event, *args):
-        isReleased = True
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                isReleased = False
-        elif not(isReleased) or event.type == pygame.MOUSEBUTTONUP:
-            pos = pygame.mouse.get_pos()
-            if self.collisionbox.collidepoint(pos):
-                isReleased= True
-                return self.call_back(*args)
+        if not self.locked:
+            isReleased = True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    isReleased = False
+            elif not(isReleased) or event.type == pygame.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+                if self.collisionbox.collidepoint(pos):
+                    isReleased= True
+                    return self.call_back(*args)
         
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_b]:
-            if self.name == "BAB":
-                return self.call_back(*args)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_b]:
+                if self.name == "BAB":
+                    return self.call_back(*args)
                             
 
 class Dimention:
@@ -282,8 +293,12 @@ class Antimatter:
         HEIGHT = screen.get_height()
         count = 0
         for dimention in self.allDimentions:
-            self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
-            self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+            if self.DimBoosts + 4 >= count + 1: 
+                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+            else:
+                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
+                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 230+60*count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230+60*count), 30))
             count += 1
@@ -354,8 +369,12 @@ class Antimatter:
         self.dTxtAmount = []
         self.dTxtPreduce = []
         for dimention in self.allDimentions:
-            self.dButtons.append(Button((25, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0), self.allDimentions[count].func,f"button {count + 1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30, (0, 0, 0),(0, 0, 0), (250, 0, 0), 10, 1))
-            self.dButtonsx10.append(Button((WIDTH - 375, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0),self.allDimentions[count].funcx10,f"buy 10 of tier {count + 1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1])) * dimention.cost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1))
+            if self.DimBoosts + 4 >= count + 1: 
+                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+            else:
+                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
+                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
             self.dTxtAmount.append(Text(f"({dimention.amount % 10})", Roboto_Black, "Black", (WIDTH - 425, 230 + 60 * count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
             count += 1
