@@ -25,7 +25,7 @@ getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
 
 
-Savesfolder = os.path.join(os.getenv("LOCALAPPDATA"), "AntimatterGame")
+Savesfolder = os.path.join(os.getenv("APPDATA"), "Antimatter Dimensions")
 os.makedirs(Savesfolder, exist_ok=True)  # Ensure the directory exists or create it
 Savefile = os.path.join(Savesfolder, "save_game.json")
 
@@ -48,7 +48,7 @@ class Text:
 
 
 class Button:
-    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr,outline_cngclr, corner_radius, outline_width):
+    def __init__(self, position, size, clr, cngclr, func, text, font, font_size, font_clr,outline_clr,outline_cngclr, corner_radius, outline_width, name = None):
         self.x, self.y = position
         self.width, self.height = size
         self.clr    = clr
@@ -59,6 +59,7 @@ class Button:
         self.rect   = self.surf.get_rect(center=position)
         self.outlineColor = outline_clr
         self.cornerRad = corner_radius
+        self.name = name
 
         if cngclr:
             self.cngclr = cngclr
@@ -137,6 +138,11 @@ class Button:
             if self.collisionbox.collidepoint(pos):
                 isReleased= True
                 return self.call_back(*args)
+        
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_b]:
+            if self.name == "BAB":
+                return self.call_back(*args)
                             
 
 class Dimention:
@@ -150,8 +156,8 @@ class Dimention:
         self.cost = baseCost
         self.preduce = 0
 
-    def func(self, antimatterAmount=0): #buying a dimension
-        if self.cost <= antimatterAmount:
+    def func(self, antimatterAmount=0, dims = 0): #buying a dimension
+        if self.cost <= antimatterAmount and int(self.name[-1]) <= dims + 4:
             print(self.name)
             self.amount += 1
             antimatterAmount -= self.cost
@@ -160,10 +166,11 @@ class Dimention:
                 self.powerMult *= 2
             self.preduce += 1
             return antimatterAmount
+        return antimatterAmount
     
-    def funcx10(self, antimatterAmount=0): # buying up to 10 dimension
+    def funcx10(self, antimatterAmount=0, dims = 0): # buying up to 10 dimension
         toTen = (10 - int(str(self.amount)[-1]))
-        if toTen * self.cost <= antimatterAmount: #finds amount to 10 and checks if you have enough to buy
+        if toTen * self.cost <= antimatterAmount and int(self.name[-1]) <= dims + 4: #finds amount to 10 and checks if you have enough to buy
             print(self.name)
             self.amount += toTen
             antimatterAmount -= toTen*self.cost
@@ -171,27 +178,43 @@ class Dimention:
             self.powerMult *= 2
             self.preduce += toTen
             return antimatterAmount
+        return antimatterAmount
 
         
 
 class Antimatter:
     def __init__(self,fps):
+        self.DEFAULTGAMESTATE = {
+            "AntimatterAmount": 10,
+            "fps": fps,
+            "tickspeed": 1,
+            "tickspeedCost": pow(10,3),
+            "tickspeedMult": 1.125,
+            "DimBoosts": 0,
+            "DimBoostCost": [20,4],
+            "Dimensions": [
+                {"name":"AD_1","amount":0,"baseCost":pow(10, 1),"costMult":pow(10, 3),"powerMult": 1}, {"name":"AD_2","amount":0,"baseCost":pow(10, 2),"costMult":pow(10, 4),"powerMult": 1}, 
+                {"name":"AD_3","amount":0,"baseCost":pow(10, 4),"costMult":pow(10, 5),"powerMult": 1}, {"name":"AD_4","amount":0,"baseCost":pow(10, 6),"costMult":pow(10, 6),"powerMult": 1},
+                {"name":"AD_5","amount":0,"baseCost":pow(10, 9),"costMult":pow(10, 8),"powerMult": 1}, {"name":"AD_6","amount":0,"baseCost":pow(10, 13),"costMult":pow(10, 10),"powerMult": 1},
+                {"name":"AD_7","amount":0,"baseCost":pow(10, 18),"costMult":pow(10, 12),"powerMult": 1}, {"name":"AD_8","amount":0,"baseCost":pow(10, 24),"costMult":pow(10, 15),"powerMult": 1}
+            ]
+        }
         self.clock = pygame.time.Clock()
-        self.tickspeed = 1
-        self.tickspeedMult = 1.125
-        self.tickspeedCost = pow(10,3)
+        self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"]
+        self.DimBoosts =  self.DEFAULTGAMESTATE["DimBoosts"]
+        self.DimBoostCost = self.DEFAULTGAMESTATE["DimBoostCost"]
         self.fps = fps
+        self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
+        self.tickspeedMult = self.DEFAULTGAMESTATE["tickspeedMult"]
+        self.tickspeedCost = self.DEFAULTGAMESTATE["tickspeedMult"]
         self.dt = self.clock.tick(self.fps)/1000
-        self.AntimatterAmount = 10
-        self.Dimentions = 0
         self.wipeSaveClicks = 5
+        self.Dimentions = 0
+        self.DimBoostbutton = None
         self.BAB = None
         self.tickspeedbutton = None
         self.wipesavebutton = None
-        self.allDimentions = [Dimention("AD_1", pow(10, 1), pow(10, 3), 1, 0), Dimention("AD_2", pow(10, 2), pow(10, 4), 1, 0), 
-                              Dimention("AD_3", pow(10, 4), pow(10, 5), 1, 0), Dimention("AD_4", pow(10, 6), pow(10, 6), 1, 0),
-                              Dimention("AD_5", pow(10, 9), pow(10, 8), 1, 0), Dimention("AD_6", pow(10, 13), pow(10, 10), 1, 0),
-                              Dimention("AD_7", pow(10, 18), pow(10, 12), 1, 0), Dimention("AD_8", pow(10, 24), pow(10, 15), 1, 0)]
+        self.allDimentions = [Dimention(**d) for d in self.DEFAULTGAMESTATE["Dimensions"]]
         self.dButtons = []
         self.dTxtAmount = []
         self.dTxtPreduce = []
@@ -211,8 +234,8 @@ class Antimatter:
     
     def buyAll(self):
         for d in self.allDimentions[::-1]:
-            while d.cost <= self.AntimatterAmount:
-                self.AntimatterAmount = d.func(self.AntimatterAmount)
+            while d.cost <= self.AntimatterAmount and self.allDimentions.index(d)< self.DimBoosts + 4:
+                self.AntimatterAmount = d.func(self.AntimatterAmount,self.DimBoosts)
         while self.tickspeedCost <= self.AntimatterAmount:
             self.tickspeedup()
 
@@ -220,6 +243,39 @@ class Antimatter:
         if self.tickspeedCost <= self.AntimatterAmount:
             self.tickspeed *= self.tickspeedMult
             self.tickspeedCost *= 10
+
+
+    def DimBoostReset(self):
+        """Resets all game stats to their original values."""
+        self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"]
+        self.fps = self.DEFAULTGAMESTATE["fps"]
+        self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
+        self.tickspeedCost = self.DEFAULTGAMESTATE["tickspeedCost"]
+        self.tickspeedMult = self.DEFAULTGAMESTATE["tickspeedMult"]
+
+        # Reset all dimensions to their original state
+        for i, dimension in enumerate(self.allDimentions):
+            original_dim = self.DEFAULTGAMESTATE["Dimensions"][i]
+            dimension.amount = original_dim["amount"]
+            dimension.baseCost = original_dim["baseCost"]
+            dimension.cost = original_dim["baseCost"]
+            dimension.costMult = original_dim["costMult"]
+            dimension.powerMult = original_dim["powerMult"]
+            dimension.preduce = 0
+
+        print("Dimboost reset complete.")
+
+    def dimensionboost(self):
+        if self.DimBoostCost[0] <= self.allDimentions[self.DimBoostCost[1]-1].preduce:
+            self.DimBoostReset()
+            self.DimBoosts += 1
+            if self.DimBoostCost[1] < 8:
+                self.DimBoostCost[1] += 1
+            else:
+                self.DimBoostCost[0] += 15
+            for i in range(min(self.DimBoosts,8)):
+                self.allDimentions[i].powerMult = pow(2,self.DimBoosts-i)
+            
 
     def DimentionsUI(self,screen):
         WIDTH = screen.get_width()
@@ -229,12 +285,12 @@ class Antimatter:
             self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
             self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 230+60*count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (425, 230+60*count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230+60*count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
         self.tickspeedbutton = Button((500, 160), (425, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-    
+        self.DimBoostbutton = Button((25, 750), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
 
     def draw(self, screen):
         count1 = 0
@@ -254,7 +310,7 @@ class Antimatter:
             count2+=1
         count3 = 0
         for tP in self.dTxtPreduce:
-            tP.text = f"{numToExpones(self.allDimentions[count3].preduce)}"
+            tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)}"
             tP.draw(screen)
             count3+=1
         if self.BAB:
@@ -265,21 +321,25 @@ class Antimatter:
         if self.wipesavebutton:
             self.wipesavebutton.txt = f"Wipe save ({self.wipeSaveClicks})"
             self.wipesavebutton.draw(screen)
+        if self.DimBoostbutton:
+            self.DimBoostbutton.txt = f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions"
+            self.DimBoostbutton.draw(screen)
 
     def event(self, event):
         for b in self.dButtons:
-            t = b.event(event, self.AntimatterAmount)
+            t = b.event(event, self.AntimatterAmount, self.DimBoosts)
             if t is not None:
                 print(t)
                 self.AntimatterAmount = t
         for bx10 in self.dButtonsx10:
-            t = bx10.event(event, self.AntimatterAmount)
+            t = bx10.event(event, self.AntimatterAmount, self.DimBoosts)
             if t is not None:
                 print(t)
                 self.AntimatterAmount = t
         self.BAB.event(event)
         self.tickspeedbutton.event(event)
         self.wipesavebutton.event(event)
+        self.DimBoostbutton.event(event)
 
     def update(self, screen):
         self.draw(screen)
@@ -297,11 +357,13 @@ class Antimatter:
             self.dButtons.append(Button((25, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0), self.allDimentions[count].func,f"button {count + 1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30, (0, 0, 0),(0, 0, 0), (250, 0, 0), 10, 1))
             self.dButtonsx10.append(Button((WIDTH - 375, 210 + 60 * count), (350, 50), (200, 200, 200), (0, 255, 0),self.allDimentions[count].funcx10,f"buy 10 of tier {count + 1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1])) * dimention.cost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1))
             self.dTxtAmount.append(Text(f"({dimention.amount % 10})", Roboto_Black, "Black", (WIDTH - 425, 230 + 60 * count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
+        self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1,"BAB")
         self.tickspeedbutton = Button((500, 160), (425, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.DimBoostbutton = Button((25, 750), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+
 
     def getGameState(self):
         # Store all game state data in a dictionary for easy JSON serialization
@@ -311,6 +373,8 @@ class Antimatter:
             "tickspeed": self.tickspeed,
             "tickspeedCost": self.tickspeedCost,
             "tickspeedMult": self.tickspeedMult,
+            "DimBoosts": self.DimBoosts,
+            "DimBoostCost": self.DimBoostCost,
             "Dimensions": [
                 {
                     "name": dimension.name,
@@ -349,6 +413,7 @@ class Antimatter:
             self.tickspeed = data.get("tickspeed", self.tickspeed)
             self.tickspeedCost = data.get("tickspeedCost", self.tickspeedCost)
             self.tickspeedMult = data.get("tickspeedMult", self.tickspeedMult)
+            self.DimBoosts = data.get("DimBoosts",self.DimBoosts)
 
             # Restore dimension attributes from JSON data
             dimensions_data = data.get("Dimensions", [])
@@ -379,6 +444,8 @@ class Antimatter:
         self.tickspeed = 1
         self.tickspeedCost = pow(10, 3)
         self.tickspeedMult = 1.125
+        self.DimBoosts = 0
+        self.DimBoostCost = [20,4]
         self.wipeSaveClicks = 5  # Reset wipe-save confirmation clicks
     
     # Reset all Dimention instances
@@ -441,13 +508,12 @@ def main(isRunning):
                 ADs.resize(screen)
             ADs.event(event)
 
-        #ADs.tickspeed = ADs.AntimatterAmount+1 # cheat code :-)
+        #ADs.tickspeed = 1000 # cheat code :-)
 
         pygame.display.flip()
         scoreText.text = "Antimatter Amount " + numToExpones(ADs.AntimatterAmount)
             
     pygame.quit()
-
 
 if __name__ == '__main__':
     main(True)
