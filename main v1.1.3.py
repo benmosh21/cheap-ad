@@ -6,6 +6,7 @@ import base64
 import pygame
 import math
 import json
+import random as rnd
 from typing import Union
 import pygame.gfxdraw
 from decimal import Decimal,getcontext
@@ -233,7 +234,7 @@ class Antimatter:
         self.dTxtAmount = []
         self.dTxtPreduce = []
         self.dButtonsx10 = []
-
+        self.newstickers = ["Test1","Test2"]
         self.DimentionsUI(screen)
 
     def ADsProduction(self):
@@ -297,18 +298,19 @@ class Antimatter:
         count = 0
         for dimention in self.allDimentions:
             if self.DimBoosts + 3 >= count: 
-                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
-                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+                self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             else:
-                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
-                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
-            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 230+60*count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230+60*count), 30))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
+                self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
+            self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 240+60*count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 240+60*count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
-        self.tickspeedbutton = Button((500, 160), (500, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.DimBoostbutton = Button((25, 750), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
+        self.BAB = Button((500, 110), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
+        self.tickspeedbutton = Button((500, 170), (500, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.wipesavebutton = Button((25, 35), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.DimBoostbutton = Button((25, 760), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
+        self.newsticker = Text(rnd.choice(self.newstickers), Roboto_Black, "Black",(WIDTH, 10),30)
 
     def draw(self, screen):
         count1 = 0
@@ -356,6 +358,13 @@ class Antimatter:
         if self.DimBoostbutton:
             self.DimBoostbutton.txt = f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions"
             self.DimBoostbutton.draw(screen)
+        if self.newsticker:
+            if self.newsticker.pos[0] > 0:
+                self.newsticker.pos = [self.newsticker.pos[0]-(60*self.dt),self.newsticker.pos[1]]
+            else:
+                self.newsticker.text = rnd.choice(self.newstickers)
+                self.newsticker.pos = [screen.get_width(),self.newsticker.pos[1]]
+            self.newsticker.draw(screen)
 
     def event(self, event):
         for b in self.dButtons:
@@ -387,19 +396,19 @@ class Antimatter:
         self.dTxtPreduce = []
         for dimention in self.allDimentions:
             if self.DimBoosts + 3 >= count : 
-                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
-                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+                self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             else:
-                self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
-                self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
-            self.dTxtAmount.append(Text(f"({dimention.amount % 10})", Roboto_Black, "Black", (WIDTH - 425, 230 + 60 * count), 30))
-            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
+                self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
+            self.dTxtAmount.append(Text(f"({dimention.amount % 10})", Roboto_Black, "Black", (WIDTH - 425, 240 + 60 * count), 30))
+            self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 240 + 60 * count), 30))
             count += 1
-        self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1,"BAB")
-        self.tickspeedbutton = Button((500, 160), (500, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
-        self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.DimBoostbutton = Button((25, 750), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
-
+        self.BAB = Button((500, 110), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1,"BAB")
+        self.tickspeedbutton = Button((500, 210), (500, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
+        self.wipesavebutton = Button((25, 35), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.DimBoostbutton = Button((25, 760), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
+        self.newsticker = Text(rnd.choice(self.newstickers), Roboto_Black, "Black",(10,HEIGHT-30),30)
 
     def getGameState(self):
         # Store all game state data in a dictionary for easy JSON serialization
@@ -445,7 +454,7 @@ class Antimatter:
 
             # Restore basic game attributes
             self.AntimatterAmount = data.get("AntimatterAmount", self.AntimatterAmount)
-            self.fps = data.get("fps", self.fps)
+            #self.fps = data.get("fps", self.fps)
             self.tickspeed = data.get("tickspeed", self.tickspeed)
             self.tickspeedCost = data.get("tickspeedCost", self.tickspeedCost)
             self.tickspeedMult = data.get("tickspeedMult", self.tickspeedMult)
@@ -517,7 +526,7 @@ def test():
 
 def main(isRunning):
     score = 0
-    fps = 20
+    fps = 60
     WIDTH, HEIGHT = 1200, 700
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
@@ -529,7 +538,7 @@ def main(isRunning):
 
         screen.fill("white")
 
-        scoreText.draw_centeredx(40,screen)
+        scoreText.draw_centeredx(50,screen)
         #button.draw(screen)
 
         score += ADs.update(screen)
