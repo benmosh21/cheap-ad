@@ -306,7 +306,7 @@ class Antimatter:
             self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230+60*count), 30))
             count += 1
         self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
-        self.tickspeedbutton = Button((500, 160), (425, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.tickspeedbutton = Button((500, 160), (500, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.DimBoostbutton = Button((25, 750), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
 
@@ -336,7 +336,13 @@ class Antimatter:
             count2+=1
         count3 = 0
         for tP in self.dTxtPreduce:
-            tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)} ({numToExpones(self.allDimentions[count3].preduce * self.allDimentions[count3].powerMult)})"
+            if count3 < 7:
+                if (self.allDimentions[count3+1].preduce * self.allDimentions[count3+1].powerMult) != 0:
+                    tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)} (+{numToExpones(((self.allDimentions[count3+1].preduce * self.allDimentions[count3+1].powerMult)/(self.allDimentions[count3].preduce))*100)}%)"
+                else:
+                    tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)} (+0.00%)"
+            else:
+                tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)}"
             tP.draw(screen)
             count3+=1
         if self.BAB:
@@ -390,7 +396,7 @@ class Antimatter:
             self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 230 + 60 * count), 30))
             count += 1
         self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1,"BAB")
-        self.tickspeedbutton = Button((500, 160), (425, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
+        self.tickspeedbutton = Button((500, 160), (500, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.DimBoostbutton = Button((25, 750), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
 
