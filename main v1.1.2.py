@@ -154,6 +154,9 @@ class Button:
             if keys[pygame.K_b]:
                 if self.name == "BAB":
                     return self.call_back(*args)
+            elif keys[pygame.K_d]:
+                if self.name == "DIMBOOST":
+                    return self.call_back(*args)
                             
 
 class Dimention:
@@ -293,7 +296,7 @@ class Antimatter:
         HEIGHT = screen.get_height()
         count = 0
         for dimention in self.allDimentions:
-            if self.DimBoosts + 4 >= count + 1: 
+            if self.DimBoosts + 3 >= count: 
                 self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
                 self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             else:
@@ -305,16 +308,24 @@ class Antimatter:
         self.BAB = Button((500, 100), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
         self.tickspeedbutton = Button((500, 160), (425, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.DimBoostbutton = Button((25, 750), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.DimBoostbutton = Button((25, 750), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
 
     def draw(self, screen):
         count1 = 0
         for b in self.dButtons:
+            if self.DimBoosts + 3  >= count1:
+                b.locked = False
+            else:
+                b.locked = True
             b.txt = f"button {count1+1}, cost: {numToExpones(self.allDimentions[count1].cost)}"
             b.draw(screen)
             count1+=1
         countx10 = 0
         for b in self.dButtonsx10:
+            if self.DimBoosts + 3  >= countx10:
+                b.locked = False
+            else:
+                b.locked = True
             b.txt = f"buy 10 of tier {countx10+1}, cost: {numToExpones((10 - int(str(self.allDimentions[countx10].amount)[-1]))*self.allDimentions[countx10].cost)}"
             b.draw(screen)
             countx10+=1
@@ -325,7 +336,7 @@ class Antimatter:
             count2+=1
         count3 = 0
         for tP in self.dTxtPreduce:
-            tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)}"
+            tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)} ({numToExpones(self.allDimentions[count3].preduce * self.allDimentions[count3].powerMult)})"
             tP.draw(screen)
             count3+=1
         if self.BAB:
@@ -369,7 +380,7 @@ class Antimatter:
         self.dTxtAmount = []
         self.dTxtPreduce = []
         for dimention in self.allDimentions:
-            if self.DimBoosts + 4 >= count + 1: 
+            if self.DimBoosts + 3 >= count : 
                 self.dButtons.append(Button((25, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
                 self.dButtonsx10.append(Button((WIDTH - 375, 210+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             else:
@@ -381,7 +392,7 @@ class Antimatter:
         self.BAB = Button((500, 100), (100, 50), (200, 200, 200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black,30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1,"BAB")
         self.tickspeedbutton = Button((500, 160), (425, 50), (200, 200, 200), (0, 255, 0), self.tickspeedup,f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}",Roboto_Black, 30, (0, 0, 0), (0, 0, 0), (255, 0, 0), 10, 1)
         self.wipesavebutton = Button((25, 25), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.DimBoostbutton = Button((25, 750), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.DimBoostbutton = Button((25, 750), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
 
 
     def getGameState(self):
@@ -433,6 +444,7 @@ class Antimatter:
             self.tickspeedCost = data.get("tickspeedCost", self.tickspeedCost)
             self.tickspeedMult = data.get("tickspeedMult", self.tickspeedMult)
             self.DimBoosts = data.get("DimBoosts",self.DimBoosts)
+            self.DimBoostCost = data.get("DimBoostCost", self.DimBoostCost)
 
             # Restore dimension attributes from JSON data
             dimensions_data = data.get("Dimensions", [])
