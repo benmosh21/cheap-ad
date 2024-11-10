@@ -26,9 +26,9 @@ getcontext().prec = 1000 #Decimal will now store up to 1000 digits of info
 
 
 
-Savesfolder = os.path.join(os.getenv("APPDATA"), "Antimatter Dimensions")
+Savesfolder = os.path.join(os.getenv("APPDATA"), "Antimatter Dimensions") # Makes the path to the directory to the save
 os.makedirs(Savesfolder, exist_ok=True)  # Ensure the directory exists or create it
-Savefile = os.path.join(Savesfolder, "save_game.json")
+Savefile = os.path.join(Savesfolder, "save_game.json") # Makes the path to the save file 
 
 class Text:
     def __init__(self, text, font, color, pos, font_size):
@@ -68,9 +68,9 @@ class Button:
         self.outlineColor = outline_clr
         self.cornerRad = corner_radius
         self.name = name
-        self.locked = locked
-        self.lockedtxt =  lockedText
-        self.locked_color = (66, 57, 66)
+        self.locked = locked #Is the button locked?
+        self.lockedtxt =  lockedText #Text to display if button locked
+        self.locked_color = (66, 57, 66) #color of button when locked
 
         if cngclr:
             self.cngclr = cngclr
@@ -129,7 +129,7 @@ class Button:
         text_rect = text_surface.get_rect(center=button_rect.center)  # Center the text on the button
         surface.blit(text_surface, text_rect)
 
-        self.collisionbox = outline_rect
+        self.collisionbox = outline_rect #Button collision box to click on is the outline rectangle (the inner rectangle is in it)
 
     def mouseover(self):
         self.curclr = self.clr
@@ -138,7 +138,7 @@ class Button:
         if self.collisionbox.collidepoint(pos):
             self.curclr = self.cngclr
             self.outline_curclr = self.outcngclr
-        if self.locked:
+        if self.locked: #If the button is locked display it
             self.curclr = self.locked_color
             self.txt = self.lockedtxt
 
@@ -159,10 +159,10 @@ class Button:
                     return self.call_back(*args)
         
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_b]:
+            if keys[pygame.K_b]: #The Buy all button has the hotkey b
                 if self.name == "BAB":
                     return self.call_back(*args)
-            elif keys[pygame.K_d]:
+            elif keys[pygame.K_d]:#The Dimension boost button has the hotkey d
                 if self.name == "DIMBOOST":
                     return self.call_back(*args)
                             
@@ -206,7 +206,7 @@ class Dimention:
 
 class Antimatter:
     def __init__(self,fps):
-        self.DEFAULTGAMESTATE = {
+        self.DEFAULTGAMESTATE = { #Defining the default game values, incase the save file is missing
             "AntimatterAmount": 10,
             "fps": fps,
             "tickspeed": 1,
@@ -222,9 +222,9 @@ class Antimatter:
             ]
         }
         self.clock = pygame.time.Clock()
-        self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"]
-        self.DimBoosts =  self.DEFAULTGAMESTATE["DimBoosts"]
-        self.DimBoostCost = self.DEFAULTGAMESTATE["DimBoostCost"]
+        self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"] #getting the value for Antimatter amount by default
+        self.DimBoosts =  self.DEFAULTGAMESTATE["DimBoosts"] # for Dimension boosts
+        self.DimBoostCost = self.DEFAULTGAMESTATE["DimBoostCost"]# ...
         self.fps = fps
         self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
         self.tickspeedMult = self.DEFAULTGAMESTATE["tickspeedMult"]
@@ -245,8 +245,8 @@ class Antimatter:
         self.DimentionsUI(screen)
 
     def ADsProduction(self):
-        self.dt = self.clock.tick(self.fps)/1000
-        count = len(self.allDimentions)-1
+        self.dt = self.clock.tick(self.fps)/1000 #updating delta time
+        count = len(self.allDimentions)-1 
         while count > 0:
             #print(self.allDimentions[count].name)
             self.allDimentions[count-1].preduce += self.allDimentions[count].powerMult*self.allDimentions[count].preduce*self.tickspeed*self.dt
@@ -256,7 +256,7 @@ class Antimatter:
     
     def buyAll(self):
         for d in self.allDimentions[::-1]:
-            while d.cost <= self.AntimatterAmount and self.allDimentions.index(d)< self.DimBoosts + 4:
+            while d.cost <= self.AntimatterAmount and self.allDimentions.index(d)< self.DimBoosts + 4: #buys only the dimensions unlocked and making sure you have the antimatter for them
                 self.AntimatterAmount = d.func(self.AntimatterAmount,self.DimBoosts)
         while self.tickspeedCost <= self.AntimatterAmount:
             self.tickspeedup()
@@ -268,7 +268,7 @@ class Antimatter:
 
 
     def DimBoostReset(self):
-        """Resets all game stats to their original values."""
+        """default values for tickspeed, antimatter and dimensions."""
         self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"]
         self.fps = self.DEFAULTGAMESTATE["fps"]
         self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
@@ -288,14 +288,14 @@ class Antimatter:
         print("Dimboost reset complete.")
 
     def dimensionboost(self):
-        if self.DimBoostCost[0] <= self.allDimentions[self.DimBoostCost[1]-1].preduce:
+        if self.DimBoostCost[0] <= self.allDimentions[self.DimBoostCost[1]-1].preduce: #checks if you have enough of the dimension needed to buy the dimension boost
             self.DimBoostReset()
-            self.DimBoosts += 1
-            if self.DimBoostCost[1] < 8:
+            self.DimBoosts += 1 #adds a dimension boost
+            if self.DimBoostCost[1] < 8: #if the dimension boost needs dimension under 8 make the dimension needed one tier higher (eg 20 tier 4 --> 20 tier 5)
                 self.DimBoostCost[1] += 1
-            else:
+            else: #else add 15 to the 
                 self.DimBoostCost[0] += 15
-            for i in range(min(self.DimBoosts,8)):
+            for i in range(min(self.DimBoosts,8)): #powers the dimensions based on dimboosts
                 self.allDimentions[i].powerMult = pow(2,self.DimBoosts-i)
             
 
@@ -365,13 +365,12 @@ class Antimatter:
         if self.DimBoostbutton:
             self.DimBoostbutton.txt = f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions"
             self.DimBoostbutton.draw(screen)
-        if self.newsticker:
-            if not self.newsticker.pos[0] < -self.newsticker.text_width:
-                self.newsticker.pos = [self.newsticker.pos[0]-(60*self.dt),self.newsticker.pos[1]]
+        if self.newsticker: #update newsticker
+            if not self.newsticker.pos[0] < -self.newsticker.text_width: #if the newsticker is still on screen
+                self.newsticker.pos = [self.newsticker.pos[0]-(60*self.dt),self.newsticker.pos[1]] #increment 60 pixels left per second
             else:
-                self.newsticker.text = rnd.choice(self.newstickers)
-                print(self.newsticker.text)
-                self.newsticker.pos = [screen.get_width()-1,self.newsticker.pos[1]]
+                self.newsticker.text = rnd.choice(self.newstickers) #choose a new meassage
+                self.newsticker.pos = [screen.get_width()-1,self.newsticker.pos[1]] #reset newsticker location
             self.newsticker.draw(screen)
 
     def event(self, event):
