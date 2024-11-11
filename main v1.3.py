@@ -41,6 +41,9 @@ class Text:
         self.text_width = self.text_surface.get_width()
         self.text_height = self.text_surface.get_height()
 
+    def relocate(self,pos):
+        self.pos = pos
+
     def draw_centeredx(self, posy, screen):
         self.text_surface = self.font.render(self.text, False, self.color)
         self.text_width = self.text_surface.get_width()
@@ -95,6 +98,12 @@ class Button:
         self.outline_rect = pygame.Rect(self.x - self.outlineSize, self.y - self.outlineSize, self.width + 2 * self.outlineSize, self.height + 2 * self.outlineSize)
         self.collisionbox = self.outline_rect
 
+    def relocate(self,position): #relocate the button by redefining all the position based methods
+        self.x, self.y = position
+        self.rect   = self.surf.get_rect(center=position)
+        self.outline_rect = pygame.Rect(self.x - self.outlineSize, self.y - self.outlineSize, self.width + 2 * self.outlineSize, self.height + 2 * self.outlineSize)
+        self.collisionbox = self.outline_rect
+    
     def draw(self,surface):
         self.mouseover()
 
@@ -165,6 +174,9 @@ class Button:
             elif keys[pygame.K_d]:#The Dimension boost button has the hotkey d
                 if self.name == "DIMBOOST":
                     return self.call_back(*args)
+            elif keys[pygame.K_g]:#...
+                if self.name == "GALAXY":
+                    return self.call_back(*args)
                             
 
 class Dimention:
@@ -214,6 +226,7 @@ class Antimatter:
             "tickspeedMult": 1.125,
             "DimBoosts": 0,
             "DimBoostCost": [20,4],
+            "Galaxies": 0,
             "Dimensions": [
                 {"name":"AD_1","amount":0,"baseCost":pow(10, 1),"costMult":pow(10, 3),"powerMult": 1}, {"name":"AD_2","amount":0,"baseCost":pow(10, 2),"costMult":pow(10, 4),"powerMult": 1}, 
                 {"name":"AD_3","amount":0,"baseCost":pow(10, 4),"costMult":pow(10, 5),"powerMult": 1}, {"name":"AD_4","amount":0,"baseCost":pow(10, 6),"costMult":pow(10, 6),"powerMult": 1},
@@ -225,17 +238,22 @@ class Antimatter:
         self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"] #getting the value for Antimatter amount by default
         self.DimBoosts =  self.DEFAULTGAMESTATE["DimBoosts"] # for Dimension boosts
         self.DimBoostCost = self.DEFAULTGAMESTATE["DimBoostCost"]# ...
+        self.Galaxies = self.DEFAULTGAMESTATE["Galaxies"]
         self.fps = fps
         self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
         self.tickspeedMult = self.DEFAULTGAMESTATE["tickspeedMult"]
-        self.tickspeedCost = self.DEFAULTGAMESTATE["tickspeedMult"]
+        self.tickspeedCost = self.DEFAULTGAMESTATE["tickspeedCost"]
+
         self.dt = self.clock.tick(self.fps)/1000
         self.wipeSaveClicks = 5
         self.Dimentions = 0
+        
+        self.GalaxyButton = None
         self.DimBoostbutton = None
         self.BAB = None
         self.tickspeedbutton = None
         self.wipesavebutton = None
+        
         self.allDimentions = [Dimention(**d) for d in self.DEFAULTGAMESTATE["Dimensions"]]
         self.dButtons = []
         self.dTxtAmount = []
@@ -297,6 +315,34 @@ class Antimatter:
                 self.DimBoostCost[0] += 15
             for i in range(min(self.DimBoosts,8)): #powers the dimensions based on dimboosts
                 self.allDimentions[i].powerMult = pow(2,self.DimBoosts-i)
+
+    def GalaxyReset(self):
+        """default values for tickspeed, dimension boosts , antimatter and dimensions."""
+        self.AntimatterAmount = self.DEFAULTGAMESTATE["AntimatterAmount"]
+        self.fps = self.DEFAULTGAMESTATE["fps"]
+        self.tickspeed = self.DEFAULTGAMESTATE["tickspeed"]
+        self.tickspeedCost = self.DEFAULTGAMESTATE["tickspeedCost"]
+        self.tickspeedMult = self.DEFAULTGAMESTATE["tickspeedMult"]
+        self.DimBoosts = self.DEFAULTGAMESTATE["DimBoosts"]
+        self.DimBoostCost = self.DEFAULTGAMESTATE["DimBoostCost"]
+
+        # Reset all dimensions to their original state
+        for i, dimension in enumerate(self.allDimentions):
+            original_dim = self.DEFAULTGAMESTATE["Dimensions"][i]
+            dimension.amount = original_dim["amount"]
+            dimension.baseCost = original_dim["baseCost"]
+            dimension.cost = original_dim["baseCost"]
+            dimension.costMult = original_dim["costMult"]
+            dimension.powerMult = original_dim["powerMult"]
+            dimension.preduce = 0
+
+        print("Galaxy reset complete.")
+
+    def GalaxyUpgrade(self):
+        if self.Galaxies*60 + 80 <= self.allDimentions[7].preduce: #checks if you have enough of the eighth dimension for the galaxy boost
+            self.GalaxyReset()
+            self.Galaxies += 1 #adds a galaxy
+            self.tickspeedMult += 0.02 #adds the galaxy boost to tickspeed
             
 
     def DimentionsUI(self,screen):
@@ -305,28 +351,33 @@ class Antimatter:
         count = 0
         for dimention in self.allDimentions:
             if self.DimBoosts + 3 >= count: 
-                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"Dimension {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1))
                 self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1))
             else:
-                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"button {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
+                self.dButtons.append(Button((25, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].func, f"Dimension {count+1}, cost: {numToExpones(dimention.cost)}", Roboto_Black, 30,  (0,0,0) , (0,0,0) , (250,0,0), 10, 1,locked=True))
                 self.dButtonsx10.append(Button((WIDTH - 375, 220+60*count), (350,50), (200,200,200), (0, 255, 0), self.allDimentions[count].funcx10, f"buy 10 of tier {count+1}, cost: {numToExpones((10 - int(str(self.allDimentions[count].amount)[-1]))*dimention.cost)}", Roboto_Black, 30,  (0,0,0), (0,0,0) , (255,0,0), 10, 1,locked=True))
             self.dTxtAmount.append(Text(f"({dimention.amount%10})", Roboto_Black, "Black", (WIDTH - 425, 240+60*count), 30))
             self.dTxtPreduce.append(Text(f"{dimention.preduce} x {numToExpones(dimention.powerMult)}", Roboto_Black, "Black", (425, 240+60*count), 30))
             count += 1
         self.BAB = Button((500, 110), (100, 50), (200,200,200), (0, 255, 0), self.buyAll, f"Buy All", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1,"BAB")
-        self.tickspeedbutton = Button((500, 170), (500, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
+        self.tickspeedbutton = Button((500, 180), (500, 50), (200,200,200), (0, 255, 0), self.tickspeedup, f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.wipesavebutton = Button((25, 35), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
-        self.DimBoostbutton = Button((25, 760), (200, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
+        self.DimBoostbutton = Button((25, 760), (400, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
         self.newsticker = Text(rnd.choice(self.newstickers), Roboto_Black, "Black",(WIDTH-1, 10),30)
+        self.GalaxyButton = Button((WIDTH-375, 760), (400, 50), (200,200,200), (0, 255, 0), self.GalaxyUpgrade, f"Galaxies ({self.Galaxies}) Costs {self.Galaxies*60 + 80} 8th dimensions", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "GALAXY")
+
 
     def draw(self, screen):
+        WIDTH = screen.get_width()
+        HEIGHT = screen.get_height()
         count1 = 0
         for b in self.dButtons:
             if self.DimBoosts + 3  >= count1:
                 b.locked = False
             else:
                 b.locked = True
-            b.txt = f"button {count1+1}, cost: {numToExpones(self.allDimentions[count1].cost)}"
+            #b.relocate((25, 220+60*count1)) #Relocates the dimension buttons, currently not used
+            b.txt = f"Dimension {count1+1}, cost: {numToExpones(self.allDimentions[count1].cost)}"
             b.draw(screen)
             count1+=1
         countx10 = 0
@@ -335,16 +386,19 @@ class Antimatter:
                 b.locked = False
             else:
                 b.locked = True
+            b.relocate((WIDTH - 375, 220+60*countx10)) #Relocates the dimension x10 buttons based on the screen width
             b.txt = f"buy 10 of tier {countx10+1}, cost: {numToExpones((10 - int(str(self.allDimentions[countx10].amount)[-1]))*self.allDimentions[countx10].cost)}"
             b.draw(screen)
             countx10+=1
         count2 = 0
         for tA in self.dTxtAmount:
+            tA.relocate((WIDTH - 425, 240+60*count2))# moves text based on the width of the screen
             tA.text = f"({self.allDimentions[count2].amount%10})"
             tA.draw(screen)
             count2+=1
         count3 = 0
         for tP in self.dTxtPreduce:
+            #tP.relocate(425, 240+60*count3) #currently not in use, can move the text
             if count3 < 7:
                 if (self.allDimentions[count3+1].preduce * self.allDimentions[count3+1].powerMult) != 0:
                     tP.text = f"{numToExpones(self.allDimentions[count3].preduce)} x {numToExpones(self.allDimentions[count3].powerMult)} (+{numToExpones(((self.allDimentions[count3+1].preduce * self.allDimentions[count3+1].powerMult)/(self.allDimentions[count3].preduce))*100)}%)"
@@ -355,16 +409,30 @@ class Antimatter:
             tP.draw(screen)
             count3+=1
         if self.BAB:
+            #self.BAB.relocate((500, 110)) #Currently not in use, can be modified to move the buy all button
             self.BAB.draw_centeredx(screen)
+
         if self.tickspeedbutton:
+            #self.tickspeedbutton.relocate((500, 180))# currently not in use, can be modified to move the tickspeed button
             self.tickspeedbutton.txt = f"Tickspeed: {numToExpones(self.tickspeed)}, Upgrade x{self.tickspeedMult}: {numToExpones(self.tickspeedCost)}"
             self.tickspeedbutton.draw_centeredx(screen)
+
         if self.wipesavebutton:
+            #self.wipesavebutton.relocate((25,35))# currently out of use, can be modified to move the button
             self.wipesavebutton.txt = f"Wipe save ({self.wipeSaveClicks})"
             self.wipesavebutton.draw(screen)
+
         if self.DimBoostbutton:
+            #self.DimBoostbutton.relocate((25, 760))# currently not in use, can be modified to move the button
             self.DimBoostbutton.txt = f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions"
             self.DimBoostbutton.draw(screen)
+
+        if self.GalaxyButton:
+            self.GalaxyButton.relocate((WIDTH-425, 760))# Used to fit the Galaxy button location based on the screen size
+            self.GalaxyButton.txt = f"Galaxies ({self.Galaxies}): Costs {self.Galaxies*60 + 80} 8th dimensions"
+            self.GalaxyButton.draw(screen)
+
+
         if self.newsticker: #update newsticker
             if not self.newsticker.pos[0] < -self.newsticker.text_width: #if the newsticker is still on screen
                 self.newsticker.pos = [self.newsticker.pos[0]-(60*self.dt),self.newsticker.pos[1]] #increment 60 pixels left per second
@@ -388,14 +456,18 @@ class Antimatter:
         self.tickspeedbutton.event(event)
         self.wipesavebutton.event(event)
         self.DimBoostbutton.event(event)
+        self.GalaxyButton.event(event)
 
     def update(self, screen):
         self.draw(screen)
         return(self.ADsProduction())
 
+    # Method no longer used
+    """""""""
     def resize(self,screen):
         WIDTH = screen.get_width()
         HEIGHT = screen.get_height()
+
         count = 0
         self.dButtons = []
         self.dButtonsx10 = []
@@ -416,6 +488,8 @@ class Antimatter:
         self.wipesavebutton = Button((25, 35), (150, 50), (200,200,200), (0, 255, 0), self.wipeSave, f"Wipe save ({self.wipeSaveClicks})", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1)
         self.DimBoostbutton = Button((25, 760), (350, 50), (200,200,200), (0, 255, 0), self.dimensionboost, f"Dimension boost ({self.DimBoosts}): {self.DimBoostCost[0]} {self.DimBoostCost[1]}th dimensions", Roboto_Black, 25, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "DIMBOOST")
         self.newsticker = Text(rnd.choice(self.newstickers), Roboto_Black, "Black",(WIDTH-1,10),30)
+        self.GalaxyButton = Button((WIDTH-375, 760), (350, 50), (200,200,200), (0, 255, 0), self.GalaxyUpgrade, f"Galaxies ({self.Galaxies}): Costs {self.Galaxies*60 + 80} of dimensions 8", Roboto_Black, 30, (0,0,0), (0,0,0), (255,0,0), 10, 1, name= "GALAXY")
+    """""""""""
 
     def getGameState(self):
         # Store all game state data in a dictionary for easy JSON serialization
@@ -427,6 +501,7 @@ class Antimatter:
             "tickspeedMult": self.tickspeedMult,
             "DimBoosts": self.DimBoosts,
             "DimBoostCost": self.DimBoostCost,
+            "Galaxies": self.Galaxies,
             "Dimensions": [
                 {
                     "name": dimension.name,
@@ -467,6 +542,7 @@ class Antimatter:
             self.tickspeedMult = data.get("tickspeedMult", self.tickspeedMult)
             self.DimBoosts = data.get("DimBoosts",self.DimBoosts)
             self.DimBoostCost = data.get("DimBoostCost", self.DimBoostCost)
+            self.Galaxies = data.get("Galaxies",self.Galaxies)
 
             # Restore dimension attributes from JSON data
             dimensions_data = data.get("Dimensions", [])
@@ -499,6 +575,7 @@ class Antimatter:
         self.tickspeedMult = 1.125
         self.DimBoosts = 0
         self.DimBoostCost = [20,4]
+        self.Galaxies = 0
         self.wipeSaveClicks = 5  # Reset wipe-save confirmation clicks
     
     # Reset all Dimention instances
@@ -558,7 +635,7 @@ def main(isRunning):
                 # Handle window resize
                 WIDTH, HEIGHT = event.w, event.h
                 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                ADs.resize(screen)
+                #ADs.resize(screen) # Method no longer used
             ADs.event(event)
 
         #ADs.tickspeed = 1000 # cheat code :-)
