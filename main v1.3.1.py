@@ -14,8 +14,9 @@ from decimal import Decimal,getcontext
 pygame.init()
 pygame.display.init()
 
-WIDTH, HEIGHT = 1200, 700
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+display_info = pygame.display.Info()
+WIDTH, HEIGHT = display_info.current_w, display_info.current_h -50
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE, pygame.FULLSCREEN)
 
 
 pygame.display.set_caption("AD cheap yes graphics knockoff")
@@ -611,7 +612,8 @@ def test():
 def main(isRunning):
     score = 0
     fps = 60
-    WIDTH, HEIGHT = 1200, 700
+    display_info = pygame.display.Info()
+    WIDTH, HEIGHT = display_info.current_w, display_info.current_h
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
     scoreText = Text("", Roboto_Black, "black", (400, 40), 30)

@@ -1,70 +1,33 @@
 import pygame
-import math
-import random as rnd
+import sys
 
 # Initialize Pygame
 pygame.init()
 
-# Screen settings
-WIDTH, HEIGHT = 400, 400
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Filling Circle")
+# Get the display's screen size
+screen_info = pygame.display.Info()
+screen_width, screen_height = screen_info.current_w, screen_info.current_h-50
 
-# Colors
-WHITE = (255, 255, 255)
-BLUE = (0, 100, 255)
+# Create a windowed display with the screen size
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
+pygame.display.set_caption("Maximized Windowed Mode")
 
-# Circle settings
-CENTER = (WIDTH // 2, HEIGHT // 2)
-RADIUS = 10
-progress = 0  # starting progress percentage
-cps = 0.1
-
-# Clock to control frame rate
-clock = pygame.time.Clock()
-
+# Main game loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:  # Press ESC to close the window
+                running = False
 
-    # Clear the screen
-    screen.fill(WHITE)
+    # Clear the screen with a color, e.g., black
+    screen.fill((0, 0, 0))
 
-    # Calculate the end angle in radians based on progress (0 to 100%)
-    end_angle = 2 * math.pi * (progress / 100) 
-
-    # Create a filled "pie slice" by drawing a polygon with the center and points on the circumference
-    points = [CENTER]
-    num_steps = max(3, int(end_angle * 180 / math.pi / 5))  # Ensure we have at least 3 points
-    for step in range(num_steps + 1):  # Go up to the end angle
-        angle = step * end_angle / num_steps
-        x = CENTER[0] + RADIUS * math.cos(angle)
-        y = CENTER[1] + RADIUS * math.sin(angle)
-        points.append((x, y))
-
-    # Draw the filled part of the circle if we have enough points
-    if len(points) > 2:
-        pygame.draw.polygon(screen, BLUE, points)
-
-    # Increase progress until it reaches 100%
-    if progress < 100:
-        progress += cps*100/60  # Adjust this value for speed (lower is slower)
-    else:
-        BLUE = rnd.choice(["BLUE","RED","BLACK","GREEN","PINK"])
-        progress = 0
-        cps *= 1.1
-    # Draw the outer circle
-    pygame.draw.circle(screen, BLUE, CENTER, RADIUS, 3)
-
-    font = pygame.font.Font(None, 36)
-    textsurf = font.render(f"Cycles per second: {cps:.2f}", False, "BLACK")
-    screen.blit(textsurf, (75,25))
-    
-    # Update display and set frame rate
+    # Update the display
     pygame.display.flip()
-    clock.tick(60)  # 60 frames per second
 
 # Quit Pygame
 pygame.quit()
+sys.exit()
