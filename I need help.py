@@ -1,53 +1,70 @@
 import pygame
+import math
+import random as rnd
 
 # Initialize Pygame
 pygame.init()
 
 # Screen settings
-screen_width = 800
-screen_height = 600
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Moving Text Right to Left")
+WIDTH, HEIGHT = 400, 400
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Filling Circle")
 
-# Define font
-font = pygame.font.SysFont("Arial", 36)
+# Colors
+WHITE = (255, 255, 255)
+BLUE = (0, 100, 255)
 
-# Text settings
-text = "Hello, World!"
-text_surface = font.render(text, True, (255, 255, 255))  # White text
-text_width = text_surface.get_width()
-text_height = text_surface.get_height()
+# Circle settings
+CENTER = (WIDTH // 2, HEIGHT // 2)
+RADIUS = 10
+progress = 0  # starting progress percentage
+cps = 0.1
 
-# Variables to control text position
-x_pos = screen_width  # Start from the right side of the screen
-y_pos = (screen_height - text_height) // 2  # Center vertically
-speed = 3  # Speed of movement
+# Clock to control frame rate
+clock = pygame.time.Clock()
 
-# Main loop
 running = True
 while running:
-    screen.fill((0, 0, 0))  # Clear screen (black background)
-
-    # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # Move the text from right to left
-    x_pos -= speed
+    # Clear the screen
+    screen.fill(WHITE)
+
+    # Calculate the end angle in radians based on progress (0 to 100%)
+    end_angle = 2 * math.pi * (progress / 100) 
+
+    # Create a filled "pie slice" by drawing a polygon with the center and points on the circumference
+    points = [CENTER]
+    num_steps = max(3, int(end_angle * 180 / math.pi / 5))  # Ensure we have at least 3 points
+    for step in range(num_steps + 1):  # Go up to the end angle
+        angle = step * end_angle / num_steps
+        x = CENTER[0] + RADIUS * math.cos(angle)
+        y = CENTER[1] + RADIUS * math.sin(angle)
+        points.append((x, y))
+
+    # Draw the filled part of the circle if we have enough points
+    if len(points) > 2:
+        pygame.draw.polygon(screen, BLUE, points)
+
+    # Increase progress until it reaches 100%
+    if progress < 100:
+        progress += cps*100/60  # Adjust this value for speed (lower is slower)
+    else:
+        BLUE = rnd.choice(["BLUE","RED","BLACK","GREEN","PINK"])
+        progress = 0
+        cps *= 1.1
+    # Draw the outer circle
+    pygame.draw.circle(screen, BLUE, CENTER, RADIUS, 3)
+
+    font = pygame.font.Font(None, 36)
+    textsurf = font.render(f"Cycles per second: {cps:.2f}", False, "BLACK")
+    screen.blit(textsurf, (75,25))
     
-    # If text goes off the left side of the screen, reset to the start position
-    if x_pos < -text_width:
-        x_pos = screen_width
-
-    # Draw the text
-    screen.blit(text_surface, (x_pos, y_pos))
-
-    # Update the display
+    # Update display and set frame rate
     pygame.display.flip()
-
-    # Frame rate
-    pygame.time.Clock().tick(60)  # 60 frames per second
+    clock.tick(60)  # 60 frames per second
 
 # Quit Pygame
 pygame.quit()
