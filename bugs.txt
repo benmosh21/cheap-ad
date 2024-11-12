@@ -1,0 +1,1 @@
+Bug report 0: when a number goes above infinity, the game crashes: possible solutions: change all numbers to the Decimal() class
